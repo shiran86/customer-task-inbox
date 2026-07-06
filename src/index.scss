@@ -1,0 +1,10 @@
+$icon-font-path: "@priority-software/priority-style-react/fonts";
+$font-path: "@priority-software/priority-style-react/fonts";
+
+@import '@priority-software/priority-style-react/style/index';
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff !important;
+}
