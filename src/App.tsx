@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { Text, Dialog } from '@priority-software/priority-style-react';
-import LottieImport from 'lottie-react';
-
-const Lottie = (LottieImport as unknown as { default: typeof LottieImport }).default ?? LottieImport;
-import loadingAnimation from './assets/loadingIndicator.json';
 import { getAllTasks } from './services/restService';
 import { transformToCustomerInbox } from './shared/utils/transformTasks';
+import { CustomerList } from './features/CustomerList';
+import { TaskThread } from './features/TaskThread';
+import { LoadingOverlay } from './shared/components/LoadingOverlay';
+import { ErrorDialog } from './shared/components/ErrorDialog';
+import { EmptyState } from './shared/components/EmptyState';
 import type { CustnotesaResponse } from './types/api';
-import { PRIORITIES } from './config/constants';
+import styles from './App.module.scss';
 
 function App() {
   const [tasks, setTasks] = useState<CustnotesaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCustomerCode, setSelectedCustomerCode] = useState<string | null>(null);
+  const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -33,89 +35,73 @@ function App() {
 
   const customerInboxes = useMemo(() => transformToCustomerInbox(tasks), [tasks]);
 
+  const selectedCustomer = useMemo(
+    () => customerInboxes.find(c => c.customerCode === selectedCustomerCode) ?? null,
+    [customerInboxes, selectedCustomerCode]
+  );
+
+  const handleSelectCustomer = useCallback((code: string) => {
+    setSelectedCustomerCode(code);
+    setIsMobileThreadOpen(true);
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setIsMobileThreadOpen(false);
+  }, []);
+
+  const handleEditTask = useCallback((taskId: number) => {
+    console.log('Edit task:', taskId);
+  }, []);
+
+  const handleDeleteTask = useCallback((taskId: number) => {
+    console.log('Delete task:', taskId);
+  }, []);
+
   const handleErrorClose = useCallback(() => {
     setError(null);
   }, []);
 
   return (
-    <>
-      {loading && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.7)',
-          zIndex: 9999,
-        }}>
-          <Lottie animationData={loadingAnimation} style={{ width: 120, height: 120 }} />
-        </div>
-      )}
+    <div className={styles.appContainer}>
+      {loading && <LoadingOverlay />}
+      <ErrorDialog message={error} onClose={handleErrorClose} />
 
-      <Dialog
-        isOpen={!!error}
-        onClose={handleErrorClose}
-        title={<Text skin="paragraph-1"><strong>Error</strong></Text>}
-        content={<Text skin="paragraph-1">{error}</Text>}
-        footer={
-          <button
-            onClick={handleErrorClose}
-            style={{
-              padding: '8px 24px',
-              borderRadius: '4px',
-              border: 'none',
-              backgroundColor: '#3B37E6',
-              color: 'white',
-              cursor: 'pointer',
-            }}
-          >
-            OK
-          </button>
-        }
-        size="small"
-      />
-
-      <div style={{ padding: '16px' }}>
-        <Text skin="subtitle-1">Customer Task Inbox</Text>
-        <Text skin="paragraph-1" style={{ marginBottom: '16px' }}>
-          {customerInboxes.length} customers loaded, {tasks.length} total tasks
-        </Text>
-
-        {customerInboxes.map(customer => (
-          <div key={customer.customerCode} style={{ marginBottom: '12px', padding: '8px', border: '1px solid #eee', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Text skin="paragraph-1">
-              <strong>{customer.customerName}</strong>
-            </Text>
-            {customer.openTaskCount > 0 && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                border: '1px solid #333',
-                fontSize: '12px',
-                fontWeight: 'bold',
-              }}>
-                {customer.openTaskCount}
-              </span>
-            )}
-            {customer.highestPriority && (
-              <span style={{
-                padding: '2px 8px',
-                borderRadius: '4px',
-                backgroundColor: PRIORITIES[customer.highestPriority].bgColor,
-                fontSize: '12px',
-              }}>
-                {PRIORITIES[customer.highestPriority].label}
-              </span>
-            )}
-          </div>
-        ))}
+      <div className={`${styles.leftPanel} ${isMobileThreadOpen ? styles.hiddenOnMobile : ''}`}>
+        <CustomerList
+          customers={customerInboxes}
+          selectedCustomerCode={selectedCustomerCode}
+          onSelectCustomer={handleSelectCustomer}
+        />
       </div>
-    </>
+
+      <div className={`${styles.rightPanel} ${!isMobileThreadOpen ? styles.hiddenOnMobile : ''}`}>
+        {selectedCustomer ? (
+          <>
+            <div className={styles.threadHeader}>
+              <button
+                className={styles.backButton}
+                onClick={handleBackToList}
+                aria-label="Back to customer list"
+              >
+                ←
+              </button>
+              <span className={styles.threadHeaderName}>{selectedCustomer.customerName}</span>
+              {selectedCustomer.openTaskCount > 0 && (
+                <span className={styles.threadHeaderCount}>{selectedCustomer.openTaskCount}</span>
+              )}
+            </div>
+            <TaskThread
+              tasks={selectedCustomer.tasks}
+              customerName={selectedCustomer.customerName}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+            />
+          </>
+        ) : (
+          <EmptyState message="Select a customer to view tasks" />
+        )}
+      </div>
+    </div>
   );
 }
 

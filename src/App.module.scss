@@ -1,0 +1,87 @@
+.appContainer {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.leftPanel {
+  width: 30%;
+  min-width: 280px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.rightPanel {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.threadHeader {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
+}
+
+.threadHeaderName {
+  font-weight: 600;
+  font-size: 16px;
+  flex: 1;
+}
+
+.threadHeaderCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 50%;
+  border: 1px solid #333;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+// Mobile breakpoint
+@media (max-width: 768px) {
+  .leftPanel {
+    width: 100%;
+  }
+
+  .rightPanel {
+    width: 100%;
+    position: absolute;
+    inset: 0;
+    background-color: #fff;
+    z-index: 100;
+  }
+
+  .hiddenOnMobile {
+    display: none;
+  }
+
+  .threadHeader {
+    display: flex;
+  }
+}

@@ -1,0 +1,13 @@
+.okButton {
+  padding: 8px 24px;
+  border-radius: 4px;
+  border: none;
+  background-color: var(--primary-color, #3B37E6);
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
