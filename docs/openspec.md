@@ -585,7 +585,8 @@ VITE_PRIORITY_PASSWORD=<password>
 - Responsive layout: mobile single-panel with navigation and sticky header
 - Back button on mobile thread view
 - Customer row component reused as sticky header on mobile
-- Loading states during API calls
+- Full-screen centered loader with blocked/dimmed UI during API calls (init + CRUD)
+- Error dialog (Priority Style) for API errors — dismissible, returns user to previous state
 - Accessible interactive elements (semantic HTML, keyboard support, ARIA labels)
 - Ensure inner scroll works correctly on both panels at all viewport sizes
 
@@ -593,7 +594,8 @@ VITE_PRIORITY_PASSWORD=<password>
 - Mobile: customer selection navigates to full-screen thread with back button
 - Sticky header shows customer info on mobile thread view
 - All interactive elements keyboard-accessible
-- Loading states visible during data fetch
+- Loader appears centered with dimmed UI during all API operations
+- Error dialog shows server error message; dismissing returns to previous state
 - No window-level scroll; panels scroll independently
 - Visual consistency across priority/category/status badges
 
