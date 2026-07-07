@@ -5,6 +5,7 @@ import type {
   UpdateTaskPayload,
   ODataErrorResponse,
   ODataCollectionResponse,
+  PriorityErrorResponse,
 } from '../types/api';
 
 function buildAuthHeader(): string {
@@ -19,13 +20,51 @@ function buildHeaders(): HeadersInit {
   };
 }
 
+function isPriorityError(body: unknown): body is PriorityErrorResponse {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'FORM' in body &&
+    typeof (body as PriorityErrorResponse).FORM?.InterfaceErrors?.text === 'string'
+  );
+}
+
+function isODataError(body: unknown): body is ODataErrorResponse {
+  return (
+    typeof body === 'object' &&
+    body !== null &&
+    'error' in body &&
+    typeof (body as ODataErrorResponse).error?.message === 'string'
+  );
+}
+
+function cleanErrorText(raw: string): string {
+  return raw
+    .replace(/שורה\s*\d+[-\s]*/g, '')
+    .replace(/[n\\]+/g, '\n')
+    .replace(/\\"/g, '"')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+}
+
+function extractErrorMessage(body: unknown): string | null {
+  if (isPriorityError(body)) {
+    return cleanErrorText(body.FORM.InterfaceErrors.text);
+  }
+  if (isODataError(body)) {
+    return body.error.message;
+  }
+  return null;
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}`;
     try {
-      const errorBody: ODataErrorResponse = await response.json();
-      if (errorBody?.error?.message) {
-        errorMessage = errorBody.error.message;
+      const errorBody: unknown = await response.json();
+      const extracted = extractErrorMessage(errorBody);
+      if (extracted) {
+        errorMessage = extracted;
       }
     } catch {
       // response body not parseable — use status text
@@ -75,9 +114,10 @@ export async function deleteTask(custnote: number): Promise<void> {
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}`;
     try {
-      const errorBody: ODataErrorResponse = await response.json();
-      if (errorBody?.error?.message) {
-        errorMessage = errorBody.error.message;
+      const errorBody: unknown = await response.json();
+      const extracted = extractErrorMessage(errorBody);
+      if (extracted) {
+        errorMessage = extracted;
       }
     } catch {
       // response body not parseable

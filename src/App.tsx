@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { getAllTasks } from './services/restService';
+import { getAllTasks, deleteTask } from './services/restService';
 import { transformToCustomerInbox } from './shared/utils/transformTasks';
 import { CustomerList } from './features/CustomerList';
 import { TaskThread } from './features/TaskThread';
 import { LoadingOverlay } from './shared/components/LoadingOverlay';
 import { ErrorDialog } from './shared/components/ErrorDialog';
 import { EmptyState } from './shared/components/EmptyState';
+import { ConfirmDialog } from './shared/components/ConfirmDialog';
 import type { CustnotesaResponse } from './types/api';
+import { PRIORITIES } from './config/constants';
 import styles from './App.module.scss';
 
 function App() {
@@ -15,6 +17,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCustomerCode, setSelectedCustomerCode] = useState<string | null>(null);
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
+  const [deleteTaskId, setDeleteTaskId] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -54,7 +57,25 @@ function App() {
   }, []);
 
   const handleDeleteTask = useCallback((taskId: number) => {
-    console.log('Delete task:', taskId);
+    setDeleteTaskId(taskId);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (deleteTaskId === null) return;
+    const id = deleteTaskId;
+    setDeleteTaskId(null);
+    try {
+      setLoading(true);
+      await deleteTask(id);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setLoading(false);
+    }
+  }, [deleteTaskId, fetchData]);
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteTaskId(null);
   }, []);
 
   const handleErrorClose = useCallback(() => {
@@ -65,6 +86,12 @@ function App() {
     <div className={styles.appContainer}>
       {loading && <LoadingOverlay />}
       <ErrorDialog message={error} onClose={handleErrorClose} />
+      <ConfirmDialog
+        isOpen={deleteTaskId !== null}
+        message="Are you sure you want to delete this task?"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
 
       <div className={`${styles.leftPanel} ${isMobileThreadOpen ? styles.hiddenOnMobile : ''}`}>
         <CustomerList
@@ -88,6 +115,14 @@ function App() {
               <span className={styles.threadHeaderName}>{selectedCustomer.customerName}</span>
               {selectedCustomer.openTaskCount > 0 && (
                 <span className={styles.threadHeaderCount}>{selectedCustomer.openTaskCount}</span>
+              )}
+              {selectedCustomer.highestPriority && (
+                <span
+                  className={styles.threadHeaderPriority}
+                  style={{ backgroundColor: PRIORITIES[selectedCustomer.highestPriority].bgColor }}
+                >
+                  {PRIORITIES[selectedCustomer.highestPriority].label}
+                </span>
               )}
             </div>
             <TaskThread

@@ -43,6 +43,21 @@ export interface ODataErrorResponse {
   };
 }
 
+export interface PriorityErrorResponse {
+  '?xml': {
+    '@version': string;
+    '@encoding': string;
+    '@standalone': string;
+  };
+  FORM: {
+    '@TYPE': string;
+    InterfaceErrors: {
+      '@XmlFormat': string;
+      text: string;
+    };
+  };
+}
+
 export interface ODataCollectionResponse<T> {
   '@odata.context'?: string;
   value: T[];

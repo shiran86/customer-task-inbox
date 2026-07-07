@@ -63,6 +63,13 @@
   font-weight: bold;
 }
 
+.threadHeaderPriority {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 // Mobile breakpoint
 @media (max-width: 768px) {
   .leftPanel {

@@ -1,4 +1,5 @@
 import { Dialog, Text } from '@priority-software/priority-style-react';
+import { getTextDirection } from '../../../config';
 import type { ErrorDialogProps } from './types';
 import styles from './ErrorDialog.module.scss';
 
@@ -10,7 +11,11 @@ export function ErrorDialog({ message, onClose }: ErrorDialogProps) {
       isOpen={!!message}
       onClose={onClose}
       title={<Text skin="subtitle-1">Error</Text>}
-      content={<Text skin="paragraph-1">{message}</Text>}
+      content={
+        <div style={{ direction: getTextDirection() }}>
+          <Text skin="paragraph-1">{message}</Text>
+        </div>
+      }
       footer={
         <button onClick={onClose} className={styles.okButton}>
           OK
