@@ -2,15 +2,15 @@ export interface CustnotesaResponse {
   CUSTNOTE: number;
   CUSTNAME: string;
   CUSTDES: string;
-  SUBJECT: string;
-  USERLOGIN: string;
-  CURDATE: string;
-  STIME: string;
-  TILLDATE: string;
-  ETIME: string;
-  STATDES: string;
-  GAL_PRIORITY: string;
-  GAL_CATEGORY: string;
+  SUBJECT: string | null;
+  USERLOGIN: string | null;
+  CURDATE: string | null;
+  STIME: string | null;
+  TILLDATE: string | null;
+  ETIME: string | null;
+  STATDES: string | null;
+  GAL_PRIORITY: string | null;
+  GAL_CATEGORY: string | null;
 }
 
 export interface CreateTaskPayload {

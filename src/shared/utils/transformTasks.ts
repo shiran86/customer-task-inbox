@@ -1,15 +1,15 @@
 import type { CustnotesaResponse } from '../../types/api';
 import type { Task, CustomerInbox } from '../../types/ui';
 import { EDITABLE_STATUSES, PRIORITIES, type PriorityValue } from '../../config/constants';
-import { isAfter, startOfDay, parse } from 'date-fns';
+import { isAfter, startOfDay, parseISO } from 'date-fns';
 
-function parseApiDate(dateStr: string): Date | null {
+function parseApiDate(dateStr: string | null): Date | null {
   if (!dateStr) return null;
-  const parsed = parse(dateStr, 'yyyy-MM-dd', new Date());
+  const parsed = parseISO(dateStr);
   return isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function isTaskOverdue(dueDate: string, status: string): boolean {
+function isTaskOverdue(dueDate: string | null, status: string): boolean {
   if (!dueDate || !EDITABLE_STATUSES.has(status)) return false;
   const parsed = parseApiDate(dueDate);
   if (!parsed) return false;
@@ -17,21 +17,22 @@ function isTaskOverdue(dueDate: string, status: string): boolean {
 }
 
 function mapToTask(raw: CustnotesaResponse): Task {
+  const status = raw.STATDES ?? '';
   return {
     id: raw.CUSTNOTE,
-    customerCode: raw.CUSTNAME,
-    customerName: raw.CUSTDES || raw.CUSTNAME,
-    subject: raw.SUBJECT || '',
-    assignedTo: raw.USERLOGIN || '',
-    startDate: raw.CURDATE || '',
-    startTime: raw.STIME || '',
-    dueDate: raw.TILLDATE || '',
-    dueTime: raw.ETIME || '',
-    status: raw.STATDES || '',
-    priority: raw.GAL_PRIORITY || '',
-    category: raw.GAL_CATEGORY || '',
-    isEditable: EDITABLE_STATUSES.has(raw.STATDES),
-    isOverdue: isTaskOverdue(raw.TILLDATE, raw.STATDES),
+    customerCode: raw.CUSTNAME ?? '',
+    customerName: raw.CUSTDES ?? raw.CUSTNAME ?? '',
+    subject: raw.SUBJECT ?? '',
+    assignedTo: raw.USERLOGIN ?? '',
+    startDate: raw.CURDATE ?? '',
+    startTime: raw.STIME ?? '',
+    dueDate: raw.TILLDATE ?? '',
+    dueTime: raw.ETIME ?? '',
+    status,
+    priority: raw.GAL_PRIORITY ?? '',
+    category: raw.GAL_CATEGORY ?? '',
+    isEditable: EDITABLE_STATUSES.has(status),
+    isOverdue: isTaskOverdue(raw.TILLDATE, status),
   };
 }
 
@@ -40,7 +41,7 @@ function getHighestPriority(tasks: Task[]): PriorityValue | null {
   let highestSeverity = 0;
 
   for (const task of tasks) {
-    if (!task.isEditable) continue;
+    if (!task.isEditable || !task.priority) continue;
     const config = PRIORITIES[task.priority as PriorityValue];
     if (config && config.severity > highestSeverity) {
       highestSeverity = config.severity;
@@ -55,7 +56,8 @@ export function transformToCustomerInbox(rawTasks: CustnotesaResponse[]): Custom
   const grouped = new Map<string, CustnotesaResponse[]>();
 
   for (const task of rawTasks) {
-    const key = task.CUSTNAME;
+    const key = task.CUSTNAME || '';
+    if (!key) continue;
     const existing = grouped.get(key);
     if (existing) {
       existing.push(task);
@@ -69,7 +71,7 @@ export function transformToCustomerInbox(rawTasks: CustnotesaResponse[]): Custom
   for (const [customerCode, rawGroup] of grouped) {
     const tasks = rawGroup.map(mapToTask);
     const openTasks = tasks.filter(t => t.isEditable);
-    const customerName = rawGroup[0].CUSTDES || rawGroup[0].CUSTNAME;
+    const customerName = rawGroup[0].CUSTDES || rawGroup[0].CUSTNAME || customerCode;
 
     tasks.sort((a, b) => a.startDate.localeCompare(b.startDate));
 
