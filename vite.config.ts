@@ -8,6 +8,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/odata': {
+        target: 'https://s.priority-connect.online',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
   resolve: {
     alias: [
       { find: /^~(.+)/, replacement: path.resolve(__dirname, 'node_modules/$1') },
