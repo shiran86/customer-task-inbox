@@ -99,3 +99,21 @@
   border: 1px solid #333;
   background-color: #fff;
 }
+
+.addButton {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  width: 100%;
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    border-color: var(--primary-color, #3B37E6);
+    color: var(--primary-color, #3B37E6);
+  }
+}

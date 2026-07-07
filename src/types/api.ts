@@ -11,6 +11,7 @@ export interface CustnotesaResponse {
   STATDES: string | null;
   GAL_PRIORITY: string | null;
   GAL_CATEGORY: string | null;
+  OUDATE: string | null;
 }
 
 export interface CreateTaskPayload {

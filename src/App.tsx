@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { getAllTasks, deleteTask } from './services/restService';
+import { getAllTasks, deleteTask, createTask, updateTask } from './services/restService';
 import { transformToCustomerInbox } from './shared/utils/transformTasks';
 import { CustomerList } from './features/CustomerList';
 import { TaskThread } from './features/TaskThread';
@@ -7,7 +7,7 @@ import { LoadingOverlay } from './shared/components/LoadingOverlay';
 import { ErrorDialog } from './shared/components/ErrorDialog';
 import { EmptyState } from './shared/components/EmptyState';
 import { ConfirmDialog } from './shared/components/ConfirmDialog';
-import type { CustnotesaResponse } from './types/api';
+import type { CustnotesaResponse, CreateTaskPayload, UpdateTaskPayload } from './types/api';
 import { PRIORITIES } from './config/constants';
 import styles from './App.module.scss';
 
@@ -18,6 +18,10 @@ function App() {
   const [selectedCustomerCode, setSelectedCustomerCode] = useState<string | null>(null);
   const [isMobileThreadOpen, setIsMobileThreadOpen] = useState(false);
   const [deleteTaskId, setDeleteTaskId] = useState<number | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const isFormOpen = editingTaskId !== null || isCreating;
 
   const fetchData = useCallback(async () => {
     try {
@@ -44,21 +48,56 @@ function App() {
   );
 
   const handleSelectCustomer = useCallback((code: string) => {
+    if (isFormOpen) return;
     setSelectedCustomerCode(code);
     setIsMobileThreadOpen(true);
-  }, []);
+  }, [isFormOpen]);
 
   const handleBackToList = useCallback(() => {
+    if (isFormOpen) return;
     setIsMobileThreadOpen(false);
-  }, []);
+  }, [isFormOpen]);
 
   const handleEditTask = useCallback((taskId: number) => {
-    console.log('Edit task:', taskId);
+    if (isFormOpen) return;
+    setEditingTaskId(taskId);
+  }, [isFormOpen]);
+
+  const handleCreateClick = useCallback(() => {
+    if (isFormOpen) return;
+    setIsCreating(true);
+  }, [isFormOpen]);
+
+  const handleFormCancel = useCallback(() => {
+    setEditingTaskId(null);
+    setIsCreating(false);
   }, []);
 
+  const handleFormSubmit = useCallback(async (
+    payload: CreateTaskPayload | UpdateTaskPayload,
+    isEdit: boolean,
+    taskId?: number
+  ) => {
+    try {
+      setLoading(true);
+      if (isEdit && taskId !== undefined) {
+        await updateTask(taskId, payload as UpdateTaskPayload);
+      } else {
+        await createTask(payload as CreateTaskPayload);
+      }
+      setEditingTaskId(null);
+      setIsCreating(false);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setLoading(false);
+    }
+  }, [fetchData]);
+
   const handleDeleteTask = useCallback((taskId: number) => {
+    if (isFormOpen) return;
     setDeleteTaskId(taskId);
-  }, []);
+  }, [isFormOpen]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (deleteTaskId === null) return;
@@ -127,9 +166,15 @@ function App() {
             </div>
             <TaskThread
               tasks={selectedCustomer.tasks}
+              customerCode={selectedCustomer.customerCode}
               customerName={selectedCustomer.customerName}
+              editingTaskId={editingTaskId}
+              isCreating={isCreating}
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
+              onFormSubmit={handleFormSubmit}
+              onFormCancel={handleFormCancel}
+              onCreateClick={handleCreateClick}
             />
           </>
         ) : (

@@ -69,11 +69,10 @@ export function transformToCustomerInbox(rawTasks: CustnotesaResponse[]): Custom
   const result: CustomerInbox[] = [];
 
   for (const [customerCode, rawGroup] of grouped) {
+    rawGroup.sort((a, b) => (a.OUDATE ?? '').localeCompare(b.OUDATE ?? ''));
     const tasks = rawGroup.map(mapToTask);
     const openTasks = tasks.filter(t => t.isEditable);
     const customerName = rawGroup[0].CUSTDES || rawGroup[0].CUSTNAME || customerCode;
-
-    tasks.sort((a, b) => a.startDate.localeCompare(b.startDate));
 
     result.push({
       customerCode,
