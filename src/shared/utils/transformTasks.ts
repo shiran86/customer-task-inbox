@@ -24,7 +24,7 @@ function mapToTask(raw: CustnotesaResponse): Task {
     customerName: raw.CUSTDES ?? raw.CUSTNAME ?? '',
     subject: raw.SUBJECT ?? '',
     assignedTo: raw.USERLOGIN ?? '',
-    startDate: raw.CURDATE ?? '',
+    startDate: raw.OUDATE ?? '',
     startTime: raw.STIME ?? '',
     dueDate: raw.TILLDATE ?? '',
     dueTime: raw.ETIME ?? '',
